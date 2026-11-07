@@ -171,6 +171,89 @@ T["mouse selects panel files"] = function()
   contains(review, "queue_index=2", "click previews file in commit review")
 end
 
+T["panel selection highlight"] = function()
+  local dir = child_mod.case_dir("git-panel-selection")
+  local repo = state.init_repo(dir .. "/repo")
+  state.write(repo .. "/alpha.txt", { "base" })
+  state.git(repo, { "add", "alpha.txt" })
+  state.git(repo, { "commit", "-m", "baseline" })
+  state.write(repo .. "/alpha.txt", { "changed" })
+  state.write(repo .. "/beta.txt", { "new" })
+
+  child:start({ lines = 24, cwd = repo })
+  child:cmd("DiffBanditCommitPanel"):settle()
+  child:lua([[
+    vim.api.nvim_set_hl(0, "CursorLine", { bg = 0x335577 })
+    vim.api.nvim_set_hl(0, "DiffBanditStatus", { bg = 0x101010, fg = 0xffffff })
+  ]])
+
+  local function backgrounds()
+    child:cmd("redraw!")
+    child:capture_grid()
+    return child:lua([[
+      local host = _G.DiffBanditTestSession() or _G.DiffBanditTestPanel()
+      local panel = host.panel
+      local pos = vim.api.nvim_win_get_position(panel.nav_win)
+      local top = vim.fn.line("w0", panel.nav_win)
+      local result = {}
+      for i, row in ipairs(panel.rows) do
+        if row.type == "file" then
+          local screen_row = pos[1] + i - top
+          local name_col = pos[2] + vim.fn.strdisplaywidth(row.text:sub(1, row.name_col))
+          local end_col = pos[2] + vim.api.nvim_win_get_width(panel.nav_win) - 2
+          result[row.entry.path] = {
+            vim.api.nvim__inspect_cell(1, screen_row, name_col)[2].background,
+            vim.api.nvim__inspect_cell(1, screen_row, end_col)[2].background,
+          }
+        end
+      end
+      return result
+    ]])
+  end
+
+  MiniTest.expect.equality(backgrounds(), {
+    ["alpha.txt"] = { 0x101010, 0x101010 },
+    ["beta.txt"] = { 0x101010, 0x101010 },
+  })
+  child:keys("j"):settle()
+  MiniTest.expect.equality(backgrounds(), {
+    ["alpha.txt"] = { 0x335577, 0x335577 },
+    ["beta.txt"] = { 0x101010, 0x101010 },
+  })
+  child:keys("<CR>"):settle()
+  MiniTest.expect.equality(backgrounds()["alpha.txt"], { 0x335577, 0x335577 })
+  child:cmd("DiffBanditCommitPanel"):settle()
+  child:cmd("DiffBanditCommitPanel"):settle()
+  MiniTest.expect.equality(backgrounds()["alpha.txt"], { 0x335577, 0x335577 })
+  child:lua([[vim.api.nvim_set_current_win(_G.DiffBanditTestSession().panel.nav_win)]])
+  child:keys("j"):settle()
+  child:keys("j"):settle()
+  MiniTest.expect.equality(backgrounds(), {
+    ["alpha.txt"] = { 0x101010, 0x101010 },
+    ["beta.txt"] = { 0x335577, 0x335577 },
+  })
+  child:cmd("set mouse=a")
+  child:lua([[
+    local panel = _G.DiffBanditTestSession().panel
+    local pos = vim.api.nvim_win_get_position(panel.nav_win)
+    local top = vim.fn.line("w0", panel.nav_win)
+    for i, row in ipairs(panel.rows) do
+      if row.entry and row.entry.path == "alpha.txt" then
+        vim.api.nvim_input_mouse("left", "press", "", 0, pos[1] + i - top, pos[2] + 2)
+        vim.api.nvim_input_mouse("left", "release", "", 0, pos[1] + i - top, pos[2] + 2)
+        return
+      end
+    end
+    error("alpha row not found")
+  ]])
+  child:settle()
+  child:lua([[vim.api.nvim_set_hl(0, "CursorLine", { bg = 0x557799 })]])
+  MiniTest.expect.equality(backgrounds(), {
+    ["alpha.txt"] = { 0x557799, 0x557799 },
+    ["beta.txt"] = { 0x101010, 0x101010 },
+  })
+end
+
 T["panel file actions"] = function()
   local dir = child_mod.case_dir("git-panel-file-actions")
   local repo = state.init_repo(dir .. "/panel-file-actions-repo")

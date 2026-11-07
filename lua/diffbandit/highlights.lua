@@ -17,6 +17,7 @@ local base_defaults = {
   DiffBanditAccentText = { link = "Identifier" },
   DiffBanditOverviewContext = { link = "Normal" },
   DiffBanditOverviewCursor = { link = "CursorLineNr" },
+  DiffBanditPanelSelection = { link = "CursorLine" },
   -- Neutral cursorline so it doesn't wash out range backgrounds
   DiffBanditCursorLine = { bg = "NONE" },
 }

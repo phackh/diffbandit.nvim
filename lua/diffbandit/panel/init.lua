@@ -227,6 +227,26 @@ local function first_non_file_row(rows)
   return first_file_row(rows)
 end
 
+local function update_nav_selection(session)
+  local panel = session.panel
+  if not panel or not panel.nav_buf or not vim.api.nvim_buf_is_valid(panel.nav_buf) then
+    return
+  end
+  local row, row_index = selected_row(session)
+  if not row or row.type ~= "file" then
+    row_index = find_file_row(panel.rows, session.file_queue_index)
+  end
+  if row_index then
+    panel.selection_mark = vim.api.nvim_buf_set_extmark(panel.nav_buf, session.ns, row_index - 1, 0, {
+      id = panel.selection_mark,
+      line_hl_group = "DiffBanditPanelSelection",
+    })
+  elseif panel.selection_mark then
+    vim.api.nvim_buf_del_extmark(panel.nav_buf, session.ns, panel.selection_mark)
+    panel.selection_mark = nil
+  end
+end
+
 local function set_nav_cursor(session, row)
   local panel = session.panel
   if not panel or not panel.nav_win or not vim.api.nvim_win_is_valid(panel.nav_win) then
@@ -236,19 +256,7 @@ local function set_nav_cursor(session, row)
   row = math.max(1, math.min(row or 1, line_count))
   local model = panel.rows and panel.rows[row]
   pcall(vim.api.nvim_win_set_cursor, panel.nav_win, { row, model and model.name_col or 0 })
-end
-
-local function row_highlight(entry)
-  local kind = entry_kind(entry or {})
-  if kind == "unmerged" then
-    return "DiffBanditDelete"
-  end
-  if kind == "added" or kind == "untracked" then
-    return "DiffBanditAdd"
-  elseif kind == "deleted" then
-    return "DiffBanditDelete"
-  end
-  return "DiffBanditChangeLeft"
+  update_nav_selection(session)
 end
 
 local function apply_nav_highlights(session)
@@ -260,10 +268,6 @@ local function apply_nav_highlights(session)
   for line, row in ipairs(panel.rows or {}) do
     if row.type == "section" then
       vim.api.nvim_buf_add_highlight(panel.nav_buf, session.ns, "DiffBanditStatusAccent", line - 1, 0, -1)
-    elseif row.type == "file" then
-      local start_col = row.name_col or 0
-      local end_col = row.name_end_col or -1
-      vim.api.nvim_buf_add_highlight(panel.nav_buf, session.ns, row_highlight(row.entry), line - 1, start_col, end_col)
     end
   end
 end
@@ -1231,7 +1235,8 @@ function M.setup_keymaps(session)
       end)
     end
     return "<LeftRelease>"
-  end, { buffer = panel.nav_buf, expr = true, noremap = true, silent = true })
+  end, keyhelp.opts(panel.nav_buf, "Files", "Preview clicked file",
+    { buffer = panel.nav_buf, expr = true, noremap = true, silent = true }))
 end
 
 function M.attach(session, opts)
@@ -1246,6 +1251,15 @@ function M.attach(session, opts)
   M.refresh_stage_states(session)
   M.render(session, opts.initial_selection, { no_initial_selection = opts.no_initial_selection ~= false })
   M.setup_keymaps(session)
+  if session.panel.selection_autocmd then
+    pcall(vim.api.nvim_del_autocmd, session.panel.selection_autocmd)
+  end
+  session.panel.selection_autocmd = vim.api.nvim_create_autocmd("CursorMoved", {
+    buffer = session.panel.nav_buf,
+    callback = function()
+      update_nav_selection(session)
+    end,
+  })
 end
 
 M._private = {

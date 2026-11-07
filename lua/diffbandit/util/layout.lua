@@ -73,7 +73,7 @@ M.winhl = {
     .. "StatusLine:DiffBanditStatusLine,StatusLineNC:DiffBanditStatusLine,"
     .. "WinBar:DiffBanditStatus,WinBarNC:DiffBanditStatus,"
     .. split .. ",CursorLine:DiffBanditStatus",
-  panel = split .. ",Normal:DiffBanditStatus,NormalNC:DiffBanditStatus,CursorLine:DiffBanditCursorLine",
+  panel = split .. ",Normal:DiffBanditStatus,NormalNC:DiffBanditStatus",
 }
 
 M.win_opts = {}
@@ -154,7 +154,7 @@ function M.win_opts.panel()
     number = false,
     relativenumber = false,
     list = false,
-    cursorline = true,
+    cursorline = false,
     wrap = false,
     signcolumn = "no",
     foldcolumn = "0",

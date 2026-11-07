@@ -411,6 +411,7 @@ opened by `:DiffBanditGit`.
 | `q` | Close the whole view (diff, merge resolver, or standalone panel) |
 
 With Neovim mouse support enabled, click a file in the panel to preview it.
+The selected file uses your colorscheme's `CursorLine` highlight.
 
 `q` closes the view the same way from the panel and the diff panes, as does
 `:DiffBanditClose`. An unfinished commit message is kept: closing the view

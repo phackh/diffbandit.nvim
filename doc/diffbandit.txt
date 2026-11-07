@@ -401,6 +401,7 @@ Panel mappings:
                 tab page, or the standalone panel. Same as |:DiffBanditClose|.
 
 With Neovim mouse support enabled, click a file in the panel to preview it.
+The selected file uses your colorscheme's CursorLine highlight.
 
 Closing a view keeps an unfinished commit message: it is saved for the
 repository and restored by the next commit panel opened there. Committing
