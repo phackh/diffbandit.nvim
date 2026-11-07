@@ -267,7 +267,7 @@ local function apply_nav_highlights(session)
   vim.api.nvim_buf_clear_namespace(panel.nav_buf, session.ns, 0, -1)
   for line, row in ipairs(panel.rows or {}) do
     if row.type == "section" then
-      vim.api.nvim_buf_add_highlight(panel.nav_buf, session.ns, "DiffBanditStatusAccent", line - 1, 0, -1)
+      vim.api.nvim_buf_add_highlight(panel.nav_buf, session.ns, "DiffBanditAccentText", line - 1, 0, -1)
     end
   end
 end
@@ -693,7 +693,7 @@ function M.render_commit(session)
     nvim.set_buffer_options(panel.commit_buf, { modifiable = true })
     vim.api.nvim_buf_set_lines(panel.commit_buf, 0, -1, false, lines)
     vim.api.nvim_buf_clear_namespace(panel.commit_buf, session.ns, 0, -1)
-    vim.api.nvim_buf_add_highlight(panel.commit_buf, session.ns, "DiffBanditStatusAccent", 0, 0, -1)
+    vim.api.nvim_buf_add_highlight(panel.commit_buf, session.ns, "DiffBanditAccentText", 0, 0, -1)
     pcall(vim.api.nvim_set_option_value, "modified", false, { buf = panel.commit_buf })
     nvim.set_buffer_options(panel.commit_buf, { modifiable = false })
     return
@@ -706,7 +706,7 @@ function M.render_commit(session)
   end
   local amend = panel.amend and "on" or "off"
   local status_line = string.format("Amend: %s    Staged files: %d", amend, staged_count)
-  local message_label_chunks = { { "Commit message:", "DiffBanditStatus" } }
+  local message_label_chunks = { { "Commit message:", "Normal" } }
   if panel.validation_message and panel.validation_message ~= "" then
     message_label_chunks[#message_label_chunks + 1] = {
       "  " .. panel.validation_message,
@@ -743,7 +743,7 @@ function M.render_commit(session)
   vim.api.nvim_buf_set_lines(panel.commit_buf, 0, -1, false, buffer_lines)
   vim.api.nvim_buf_clear_namespace(panel.commit_buf, session.ns, 0, -1)
   pcall(vim.api.nvim_buf_set_extmark, panel.commit_buf, session.ns, 0, 0, {
-    virt_text = { { status_line, "DiffBanditStatusAccent" } },
+    virt_text = { { status_line, "DiffBanditAccentText" } },
     virt_text_pos = "overlay",
     priority = 50,
   })

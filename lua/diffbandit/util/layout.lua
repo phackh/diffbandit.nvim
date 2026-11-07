@@ -73,7 +73,7 @@ M.winhl = {
     .. "StatusLine:DiffBanditStatusLine,StatusLineNC:DiffBanditStatusLine,"
     .. "WinBar:DiffBanditStatus,WinBarNC:DiffBanditStatus,"
     .. split .. ",CursorLine:DiffBanditStatus",
-  panel = split .. ",Normal:DiffBanditStatus,NormalNC:DiffBanditStatus",
+  panel = split .. ",NormalNC:Normal",
 }
 
 M.win_opts = {}

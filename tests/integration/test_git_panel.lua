@@ -184,7 +184,8 @@ T["panel selection highlight"] = function()
   child:cmd("DiffBanditCommitPanel"):settle()
   child:lua([[
     vim.api.nvim_set_hl(0, "CursorLine", { bg = 0x335577 })
-    vim.api.nvim_set_hl(0, "DiffBanditStatus", { bg = 0x101010, fg = 0xffffff })
+    vim.api.nvim_set_hl(0, "Normal", { bg = 0x101010, fg = 0xffffff })
+    vim.api.nvim_set_hl(0, "DiffBanditStatus", { bg = 0x404040, fg = 0xffffff })
   ]])
 
   local function backgrounds()
@@ -195,6 +196,7 @@ T["panel selection highlight"] = function()
       local panel = host.panel
       local pos = vim.api.nvim_win_get_position(panel.nav_win)
       local top = vim.fn.line("w0", panel.nav_win)
+      local normal_bg = vim.api.nvim_get_hl(0, { name = "Normal", link = false }).bg
       local result = {}
       for i, row in ipairs(panel.rows) do
         if row.type == "file" then
@@ -202,8 +204,8 @@ T["panel selection highlight"] = function()
           local name_col = pos[2] + vim.fn.strdisplaywidth(row.text:sub(1, row.name_col))
           local end_col = pos[2] + vim.api.nvim_win_get_width(panel.nav_win) - 2
           result[row.entry.path] = {
-            vim.api.nvim__inspect_cell(1, screen_row, name_col)[2].background,
-            vim.api.nvim__inspect_cell(1, screen_row, end_col)[2].background,
+            vim.api.nvim__inspect_cell(1, screen_row, name_col)[2].background or normal_bg,
+            vim.api.nvim__inspect_cell(1, screen_row, end_col)[2].background or normal_bg,
           }
         end
       end
@@ -215,6 +217,18 @@ T["panel selection highlight"] = function()
     ["alpha.txt"] = { 0x101010, 0x101010 },
     ["beta.txt"] = { 0x101010, 0x101010 },
   })
+  MiniTest.expect.equality(child:lua([[
+    local panel = _G.DiffBanditTestPanel().panel
+    local nav = vim.api.nvim_win_get_position(panel.nav_win)
+    local commit = vim.api.nvim_win_get_position(panel.commit_win)
+    local normal_bg = vim.api.nvim_get_hl(0, { name = "Normal", link = false }).bg
+    return {
+      vim.api.nvim__inspect_cell(1, nav[1], nav[2] + 2)[2].background or normal_bg,
+      vim.api.nvim__inspect_cell(1, commit[1], commit[2] + 2)[2].background or normal_bg,
+      vim.api.nvim__inspect_cell(1, commit[1] + 1, commit[2] + 2)[2].background or normal_bg,
+      vim.api.nvim__inspect_cell(1, commit[1] + 2, commit[2] + 2)[2].background or normal_bg,
+    }
+  ]]), { 0x101010, 0x101010, 0x101010, 0x101010 })
   child:keys("j"):settle()
   MiniTest.expect.equality(backgrounds(), {
     ["alpha.txt"] = { 0x335577, 0x335577 },
