@@ -1220,6 +1220,18 @@ function M.setup_keymaps(session)
         keyhelp.opts(buf, spec.section, spec.desc, { buffer = buf, nowait = true, noremap = true, silent = true }))
     end
   end
+
+  vim.keymap.set("n", "<LeftRelease>", function()
+    local mouse = vim.fn.getmousepos()
+    if mouse.winid == panel.nav_win then
+      vim.schedule(function()
+        if not session.disposed and session.panel == panel then
+          preview_selected(session)
+        end
+      end)
+    end
+    return "<LeftRelease>"
+  end, { buffer = panel.nav_buf, expr = true, noremap = true, silent = true })
 end
 
 function M.attach(session, opts)

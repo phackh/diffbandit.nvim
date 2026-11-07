@@ -410,6 +410,8 @@ opened by `:DiffBanditGit`.
 | `gzp` | Hide the panel, keeping the diff open |
 | `q` | Close the whole view (diff, merge resolver, or standalone panel) |
 
+With Neovim mouse support enabled, click a file in the panel to preview it.
+
 `q` closes the view the same way from the panel and the diff panes, as does
 `:DiffBanditClose`. An unfinished commit message is kept: closing the view
 saves it for the repository, and the next commit panel opened there restores

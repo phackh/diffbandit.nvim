@@ -400,6 +400,8 @@ Panel mappings:
   q             Close the whole view: the diff or merge resolver with its
                 tab page, or the standalone panel. Same as |:DiffBanditClose|.
 
+With Neovim mouse support enabled, click a file in the panel to preview it.
+
 Closing a view keeps an unfinished commit message: it is saved for the
 repository and restored by the next commit panel opened there. Committing
 clears it. Moving the panel selection between a merge conflict and a changed

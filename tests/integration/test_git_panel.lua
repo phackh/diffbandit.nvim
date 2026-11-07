@@ -113,6 +113,64 @@ T["commit panel"] = function()
   state.diff_contains(repo, "worktree", "alpha.txt", "alpha changed", "panel commit should leave unstaged alpha change")
 end
 
+T["mouse selects panel files"] = function()
+  local dir = child_mod.case_dir("git-panel-mouse")
+  local repo = state.init_repo(dir .. "/repo")
+  state.write(repo .. "/alpha.txt", { "alpha base" })
+  state.write(repo .. "/beta.txt", { "beta base" })
+  state.git(repo, { "add", "alpha.txt", "beta.txt" })
+  state.git(repo, { "commit", "-m", "baseline" })
+  state.write(repo .. "/alpha.txt", { "alpha changed" })
+  state.write(repo .. "/beta.txt", { "beta changed" })
+
+  child:start({ lines = 24, cwd = repo })
+  child:cmd("set mouse=a")
+  child:lua([[require("diffbandit.state").get_config().git.panel.preview_on_cursor = false]])
+  child:cmd("DiffBanditCommitPanel"):settle()
+
+  local function click_file(path)
+    child:lua([[
+      local host = _G.DiffBanditTestSession() or _G.DiffBanditTestPanel()
+      local panel = host.panel
+      local position = vim.api.nvim_win_get_position(panel.nav_win)
+      for i, row in ipairs(panel.rows) do
+        if row.entry and row.entry.path == ... then
+          local screen_row = position[1] + i - vim.fn.line("w0", panel.nav_win)
+          vim.api.nvim_input_mouse("left", "press", "", 0, screen_row, position[2] + 2)
+          vim.api.nvim_input_mouse("left", "release", "", 0, screen_row, position[2] + 2)
+          return
+        end
+      end
+      error("file row not found")
+    ]], { path })
+    child:settle()
+  end
+
+  click_file("alpha.txt")
+  local first = panel_state(dir, "mouse-alpha")
+  child:keys("<CR>"):settle()
+  click_file("beta.txt")
+  local second = panel_state(dir, "mouse-beta")
+  child:stop()
+
+  state.git(repo, { "add", "alpha.txt", "beta.txt" })
+  state.git(repo, { "commit", "-m", "change files" })
+  child:start({ lines = 24, cwd = repo })
+  child:cmd("set mouse=a")
+  child:cmd("DiffBanditGitCommit HEAD"):settle()
+  click_file("beta.txt")
+  local review = panel_state(dir, "mouse-review")
+  child:stop()
+
+  contains(first, "selected_path=alpha.txt", "click selects first file")
+  contains(first, "queue_index=1", "click previews first file")
+  contains(second, "selected_path=beta.txt", "click from diff selects second file")
+  contains(second, "queue_index=2", "click from diff previews second file")
+  contains(second, "focus=panel", "click focuses panel")
+  contains(review, "selected_path=beta.txt", "click selects file in commit review")
+  contains(review, "queue_index=2", "click previews file in commit review")
+end
+
 T["panel file actions"] = function()
   local dir = child_mod.case_dir("git-panel-file-actions")
   local repo = state.init_repo(dir .. "/panel-file-actions-repo")
